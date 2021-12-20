@@ -1,217 +1,104 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
-import { Card, CardBody, Container, Button, Col, Row } from "reactstrap";
+import './App.css';
+import Board from "./Board";
+import Square from "./Square";
+import {useState, useEffect} from 'react';
 
-import Icons from "./Icons";
-import "bootstrap/dist/css/bootstrap.css";
+const defaultSquares = () => (new Array(9)).fill(null);
+
+const lines = [
+  [0,1,2], [3,4,5], [6,7,8],
+  [0,3,6], [1,4,7], [2,5,8],
+  [0,4,8], [2,4,6],
+];
 
 function App() {
-  const [isCross, setIsCross] = useState(false);
-  const [winMessage, setWinMessage] = useState("");
-  const [selectedValue, setSelectedValue] = useState("cross");
-  const [selectedMatrix, setSelectedMatrix] = useState(3);
-  const [fillArray, setFillArray] = useState(16);
-
-  var aiPlayer = selectedValue === "cross" ? "zero" : "cross";
-  var huPlayer = selectedValue;
-
-  var origBoard;
-  let cardArray = new Array(9).fill("empty");
-  const [cells, setCells] = useState(document.querySelectorAll(".card"));
-  console.log("cells: ", cells);
+  const [squares, setSquares] = useState(defaultSquares());
+  const [winner,setWinner] = useState(null);
 
   useEffect(() => {
-    startGame();
-  }, []);
-
-  const [winCombos, setWinCombos] = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [6, 4, 2],
-  ];
-
-  const startGame = () => {
-    // document.querySelector(".endgame").style.display = "none";
-    origBoard = Array.from(cardArray.keys());
-  };
-
-  const turnClick = (square) => {
-    console.log('square: ', square);
-    //square = index
-    console.log("calling turn click");
-    if (cardArray[square] == "empty") {
-      
-      console.log("yes");
-      turn(square, huPlayer);
-      // if (!checkWin(origBoard, huPlayer) && !checkTie())
-      // turn(bestSpot(), aiPlayer);
+    const isComputerTurn = squares.filter(square => square !== null).length % 2 === 1;
+    const linesThatAre = (a,b,c) => {
+      return lines.filter(squareIndexes => {
+        const squareValues = squareIndexes.map(index => squares[index]);
+        return JSON.stringify([a,b,c].sort()) === JSON.stringify(squareValues.sort());
+      });
+    };
+    const emptyIndexes = squares
+      .map((square,index) => square === null ? index : null)
+      .filter(val => val !== null);
+    const playerWon = linesThatAre('x', 'x', 'x').length > 0;
+    const computerWon = linesThatAre('o', 'o', 'o').length > 0;
+    if (playerWon) {
+      setWinner('x');
     }
-  };
-
-  function turn(squareId, player) {
-    console.log('player: ', player);
-    cardArray[squareId] = player;
-    
-    document.getElementById(squareId).innerText = player;
-    console.log('cardArray: ', cardArray);
-    
-    setIsCross(!isCross);
-   
-    // let gameWon = checkWin(origBoard, player);
-    // if (gameWon) gameOver(gameWon);
-  }
-
-  function checkWin(board, player) {
-    let plays = board.reduce((a, e, i) => (e === player ? a.concat(i) : a), []);
-    let gameWon = null;
-    for (let [index, win] of winCombos.entries()) {
-      if (win.every((elem) => plays.indexOf(elem) > -1)) {
-        gameWon = { index: index, player: player };
-        break;
-      }
+    if (computerWon) {
+      setWinner('o');
     }
-    return gameWon;
-  }
+    const putComputerAt = index => {
+      let newSquares = squares;
+      newSquares[index] = 'o';
+      setSquares([...newSquares]);
+    };
+    if (isComputerTurn) {
 
-  function gameOver(gameWon) {
-    for (let index of winCombos[gameWon.index]) {
-      document.getElementById(index).style.backgroundColor =
-        gameWon.player == huPlayer ? "blue" : "red";
-    }
-    for (var i = 0; i < cells.length; i++) {
-      cells[i].removeEventListener("click", turnClick, false);
-    }
-    declareWinner(gameWon.player == huPlayer ? "You win!" : "You lose.");
-  }
-
-  function declareWinner(who) {
-    document.querySelector(".endgame").style.display = "block";
-    document.querySelector(".endgame .text").innerText = who;
-  }
-
-  function emptySquares() {
-    return origBoard.filter((s) => typeof s == "number");
-  }
-
-  function bestSpot() {
-    return minimax(origBoard, aiPlayer).index;
-  }
-
-  function checkTie() {
-    if (emptySquares().length == 0) {
-      for (var i = 0; i < cells.length; i++) {
-        cells[i].style.backgroundColor = "green";
-        cells[i].removeEventListener("click", turnClick, false);
-      }
-      declareWinner("Tie Game!");
-      return true;
-    }
-    return false;
-  }
-
-  function minimax(newBoard, player) {
-    var availSpots = emptySquares();
-
-    if (checkWin(newBoard, huPlayer)) {
-      return { score: -10 };
-    } else if (checkWin(newBoard, aiPlayer)) {
-      return { score: 10 };
-    } else if (availSpots.length === 0) {
-      return { score: 0 };
-    }
-    var moves = [];
-    for (var i = 0; i < availSpots.length; i++) {
-      var move = {};
-      move.index = newBoard[availSpots[i]];
-      newBoard[availSpots[i]] = player;
-
-      if (player == aiPlayer) {
-        var result = minimax(newBoard, huPlayer);
-        move.score = result.score;
-      } else {
-        var result = minimax(newBoard, aiPlayer);
-        move.score = result.score;
+      const winingLines = linesThatAre('o', 'o', null);
+      if (winingLines.length > 0) {
+        const winIndex = winingLines[0].filter(index => squares[index] === null)[0];
+        putComputerAt(winIndex);
+        return;
       }
 
-      newBoard[availSpots[i]] = move.index;
-
-      moves.push(move);
-    }
-
-    var bestMove;
-    if (player === aiPlayer) {
-      var bestScore = -10000;
-      for (var i = 0; i < moves.length; i++) {
-        if (moves[i].score > bestScore) {
-          bestScore = moves[i].score;
-          bestMove = i;
-        }
+      const linesToBlock = linesThatAre('x', 'x', null);
+      if (linesToBlock.length > 0) {
+        const blockIndex = linesToBlock[0].filter(index => squares[index] === null)[0];
+        putComputerAt(blockIndex);
+        return;
       }
-    } else {
-      var bestScore = 10000;
-      for (var i = 0; i < moves.length; i++) {
-        if (moves[i].score < bestScore) {
-          bestScore = moves[i].score;
-          bestMove = i;
-        }
-      }
-    }
 
-    return moves[bestMove];
+      const linesToContinue = linesThatAre('o', null, null);
+      if (linesToContinue.length > 0) {
+        putComputerAt(linesToContinue[0].filter(index => squares[index] === null)[0]);
+        return;
+      }
+
+      const randomIndex = emptyIndexes[ Math.ceil(Math.random()*emptyIndexes.length) ];
+      putComputerAt(randomIndex);
+    }
+  }, [squares]);
+
+
+
+  function handleSquareClick(index) {
+    const isPlayerTurn = squares.filter(square => square !== null).length % 2 === 0;
+    if (isPlayerTurn) {
+      let newSquares = squares;
+      newSquares[index] = 'x';
+      setSquares([...newSquares]);
+    }
   }
 
   return (
-    <>
-      <Container className="p-5 first1">
-        {/* <ToastContainer position="bottom-center" color="black" /> */}
-        <Row>
-          <Col md={6} className="offset-md-3">
-            {winMessage !== "" ? (
-              <div className="mb-2 mt-2">
-                <h1 className=" text-uppercase text-center text-info ">
-                  {winMessage}
-                </h1>
-                <Button
-                  color="success text-uppercase"
-                  block
-                  // onClick={reloadGame}
-                >
-                  Reload game
-                </Button>
-              </div>
-            ) : (
-              <h1 className=" text-warning text-uppercase text-center ">
-                {isCross ? "Circle" : "Cross"} turn
-              </h1>
-            )}
-            <div className="grid">
-              {cardArray.map((value, indexNumber) => {
-                return (
-                  <Card
-                    key={indexNumber}
-                    id={indexNumber}
-                    onClick={() => {
-                      // changeCardArray(indexNumber);
-                      // checkWinner();
-                      turnClick(indexNumber);
-                    }}
-                  >
-                    <CardBody className="box">
-                      {/* <Icons name={value} /> */}
-                    </CardBody>
-                  </Card>
-                );
-              })}
-            </div>
-          </Col>
-        </Row>
-      </Container>
-    </>
+    <main>
+      <Board>
+        {squares.map((square,index) =>
+          <Square
+            x={square==='x'?1:0}
+            o={square==='o'?1:0}
+            onClick={() => handleSquareClick(index)} />
+        )}
+      </Board>
+      {!!winner && winner === 'x' && (
+        <div className="result green">
+          You WON!
+        </div>
+      )}
+      {!!winner && winner === 'o' && (
+        <div className="result red">
+          You LOST!
+        </div>
+      )}
+
+    </main>
   );
 }
 
