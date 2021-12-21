@@ -191,66 +191,81 @@ function App() {
   }
 
   return (
-    <main>
-      <div className="dropdown">
-        <button
-          className="btn btn-secondary dropdown-toggle"
-          type="button"
-          id="dropdownMenuButton1"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
-          {humanInput
-            ? `Chosen input ${humanInput === "o" ? "O" : "X"}`
-            : "Choose input"}
-        </button>
-        <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-          <li
-            className="dropdown-item text-center border"
-            style={{ fontWeight: "bold", cursor: "pointer" }}
-            onClick={() => setHumanInput("x")}
-          >
-            X
-          </li>
-          <li
-            className="dropdown-item text-center border"
-            style={{ fontWeight: "bold", cursor: "pointer" }}
-            onClick={() => setHumanInput("o")}
-          >
-            O
-          </li>
-        </ul>
-      </div>
-
-      <div className="text-white">
-        Time : {"  "}
-        <strong>{Math.floor(time / 1000)}</strong>
-      </div>
-      <Board>
-        {squares.map((square, index) => (
-          <Square
-            x={square === "x" ? 1 : 0}
-            o={square === "o" ? 1 : 0}
-            onClick={() => handleSquareClick(index)}
-          />
-        ))}
-      </Board>
-
+    <div className="col-md-12 col-sm-12">
       <div
-      className={`${
-        winner && winner === humanInput ? "result green" : winner &&  winner !== "null" && "result red"
-      }`}
+        className="text-uppercase p-2 text-center"
+        style={{ backgroundColor: "white", color: "tomato" }}
       >
-        {winner && winner !== "" && winner === humanInput ? (
-          <span className="text-uppercase bold">You won</span>
-        ) : (
-          winner &&
-          winner !== "null" && (
-            <span className="text-uppercase bold">You lost</span>
-          )
+        <h1>TIC TAC TOE</h1>
+      </div>  
+      <main>
+        <div className="dropdown">
+          <button
+            className="btn btn-secondary dropdown-toggle"
+            type="button"
+            id="dropdownMenuButton1"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {humanInput
+              ? `Chosen input ${humanInput === "o" ? "O" : "X"}`
+              : "Choose input"}
+          </button>
+          <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            <li
+              className="dropdown-item text-center border"
+              style={{ fontWeight: "bold", cursor: "pointer" }}
+              onClick={() => setHumanInput("x")}
+            >
+              X
+            </li>
+            <li
+              className="dropdown-item text-center border"
+              style={{ fontWeight: "bold", cursor: "pointer" }}
+              onClick={() => setHumanInput("o")}
+            >
+              O
+            </li>
+          </ul>
+        </div>
+
+        {humanInput && (
+          <>
+            {" "}
+            <div className="text-white">
+              Time : {"  "}
+              <strong>{Math.floor(time / 1000)}</strong>
+            </div>
+            <Board>
+              {squares.map((square, index) => (
+                <Square
+                  x={square === "x" ? 1 : 0}
+                  o={square === "o" ? 1 : 0}
+                  onClick={() => handleSquareClick(index)}
+                />
+              ))}
+            </Board>
+          </>
         )}
-      </div>
-    </main>
+
+        <div
+          className={`${
+            winner && winner === humanInput
+              ? "result green"
+              : winner && winner !== "null" && "result red"
+          }`}
+        >
+          {winner && winner !== "" && winner === humanInput ? (
+            <span className="text-uppercase text-white bold">You won</span>
+          ) : (
+            winner &&
+            winner !== "null" && (
+              <span className="text-uppercase text-white bold">You lost</span>
+            )
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
 
