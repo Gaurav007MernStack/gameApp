@@ -26,17 +26,17 @@ function App() {
   const [humanInput, setHumanInput] = useState();
 
   useEffect(() => {
-    if (time > 30000 && !winner) {
+    if (time > 60000 && !winner) {
       setSquares(defaultSquares);
       setWinner(null);
       reset();
-      alert("Match timedout , Please start again.");
+      alert("Match timeout , Please start again.");
       window.location.reload();
     }
   }, [time]);
 
   useEffect(() => {
-    console.log("winner: ", winner);
+    // console.log("winner: ", winner);
     if (winner == "x" || winner == "o") {
       setTimeout(() => {
         if (
@@ -64,12 +64,15 @@ function App() {
 
     const linesThatAre = (a, b, c) => {
       return lines.filter((squareIndexes) => {
+        // console.log('squareIndexes: ', squareIndexes);
         const squareValues = squareIndexes.map((index) => squares[index]);
         return (
           JSON.stringify([a, b, c].sort()) ===
           JSON.stringify(squareValues.sort())
         );
+
       });
+      
     };
     const emptyIndexes = squares
       .map((square, index) => (square === null ? index : null))
@@ -112,6 +115,7 @@ function App() {
         humanInput === "x" ? "o" : "x",
         null
       );
+      console.log("winingLines: ", winingLines);
       if (winingLines.length > 0) {
         const winIndex = winingLines[0].filter(
           (index) => squares[index] === null
@@ -122,10 +126,12 @@ function App() {
       }
 
       const linesToBlock = linesThatAre(humanInput, humanInput, null);
+      console.log("linesToBlock: ", linesToBlock);
       if (linesToBlock.length > 0) {
         const blockIndex = linesToBlock[0].filter(
           (index) => squares[index] === null
         )[0];
+
         putComputerAt(blockIndex);
         return;
       }
@@ -135,6 +141,7 @@ function App() {
         null,
         null
       );
+      console.log("linesToContinue: ", linesToContinue);
       if (linesToContinue.length > 0) {
         putComputerAt(
           linesToContinue[0].filter((index) => squares[index] === null)[0]
@@ -157,20 +164,20 @@ function App() {
       setWinner("null");
       window.location.reload();
     }
-    console.log("!winner: ", !winner);
+    // console.log("!winner: ", !winner);
 
     let isPlayerTurn;
-    console.log(
-      "squares.filter((square) => square !== null): ",
-      squares.filter((square) => square !== null).length == 0
-    );
+    // console.log(
+    //   "squares.filter((square) => square !== null): ",
+    //   squares.filter((square) => square !== null).length == 0
+    // );
     // if (!winner && squares.filter((square) => square !== null)) {
 
     isPlayerTurn = squares.filter((square) => square !== null).length % 2 === 0;
     // }
 
     if (isPlayerTurn) {
-      console.log("squares[index]: ", squares[index]);
+      // console.log("squares[index]: ", squares[index]);
       if (squares[index] == (humanInput === "x" ? "o" : "x")) {
         return alert("You can't click on it.");
       }
@@ -178,11 +185,11 @@ function App() {
         return alert("Already filled.");
       }
       if (!winner && squares.filter((square) => square !== null).length == 0) {
-        console.log("ddddd");
+        // console.log("ddddd");
         start();
         start();
       }
-      console.log("ss");
+
       // start();
       let newSquares = squares;
       newSquares[index] = humanInput;
@@ -197,7 +204,7 @@ function App() {
         style={{ backgroundColor: "white", color: "tomato" }}
       >
         <h1>TIC TAC TOE</h1>
-      </div>  
+      </div>
       <main>
         <div className="dropdown">
           <button
@@ -206,6 +213,7 @@ function App() {
             id="dropdownMenuButton1"
             data-bs-toggle="dropdown"
             aria-expanded="false"
+            disabled={humanInput}
           >
             {humanInput
               ? `Chosen input ${humanInput === "o" ? "O" : "X"}`
