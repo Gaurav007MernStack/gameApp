@@ -3,6 +3,8 @@ import Board from "./Board";
 import Square from "./Square";
 import { useState, useEffect } from "react";
 import { useStopwatch } from "react-use-stopwatch";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle";
 
 const defaultSquares = () => new Array(9).fill(null);
 
@@ -21,40 +23,44 @@ function App() {
   const [{ time }, start, stop, reset] = useStopwatch();
   const [squares, setSquares] = useState(defaultSquares());
   const [winner, setWinner] = useState(null);
+  const [humanInput, setHumanInput] = useState();
 
   useEffect(() => {
-    if (time > 60000 && !winner) {
-      reset();
+    if (time > 30000 && !winner) {
       setSquares(defaultSquares);
       setWinner(null);
-      alert("Start Again");
+      reset();
+      alert("Match timedout , Please start again.");
+      window.location.reload();
     }
   }, [time]);
 
   useEffect(() => {
     console.log("winner: ", winner);
-    if (winner) {
-      // setSquares(defaultSquares);
-      // setWinner(null);
-      // alert("Start again");
-      setTimeout(()=>{
-        if (window.confirm(`Want to Play Again!!, ${winner} won`)) {
+    if (winner == "x" || winner == "o") {
+      setTimeout(() => {
+        if (
+          window.confirm(
+            `Hurray!! ${
+              winner === humanInput ? "You won" : "You lost"
+            }, wanna to play again!, `
+          )
+        ) {
+          setWinner("null");
           window.location.reload();
-          // setWinner(null)
         } else {
           window.location.reload();
         }
-      },1000)
+      }, 100);
     }
   }, [winner]);
 
   useEffect(() => {
-    
     let isComputerTurn;
-    if (!winner && squares.filter((square) => square !== null)) {
-      isComputerTurn =
-        squares.filter((square) => square !== null).length % 2 === 1;
-    }
+    // if (!winner && squares.filter((square) => square !== null)) {
+    isComputerTurn =
+      squares.filter((square) => square !== null).length % 2 === 1;
+    // }
 
     const linesThatAre = (a, b, c) => {
       return lines.filter((squareIndexes) => {
@@ -68,35 +74,54 @@ function App() {
     const emptyIndexes = squares
       .map((square, index) => (square === null ? index : null))
       .filter((val) => val !== null);
-    const playerWon = linesThatAre("x", "x", "x").length > 0;
-    const computerWon = linesThatAre("o", "o", "o").length > 0;
+    const playerWon =
+      linesThatAre(humanInput, humanInput, humanInput).length > 0;
+    const computerWon =
+      linesThatAre(
+        humanInput === "x" ? "o" : "x",
+        humanInput === "x" ? "o" : "x",
+        humanInput === "x" ? "o" : "x"
+      ).length > 0;
+    if (squares.filter((square) => square === null).length === 0 && !winner) {
+      alert("`Match Tied!!, Restart again");
+      setWinner("null");
+      window.location.reload();
+    }
     if (playerWon) {
-      setWinner("x");
+      setWinner(humanInput);
     }
     if (computerWon) {
-      setWinner("o");
+      setWinner(humanInput === "x" ? "o" : "x");
     }
     const putComputerAt = (index) => {
-      if((squares.filter((square) => square === null).length===0 && !winner)){
-        alert('`Match Draw!!, Restart again')
-        window.location.reload();
+      if (squares[index] == humanInput) {
+        return;
+      }
+      if (squares[index] == (humanInput === "x" ? "o" : "x")) {
+        return alert("Already filled.");
       }
       let newSquares = squares;
-      newSquares[index] = "o";
+      newSquares[index] = humanInput === "x" ? "o" : "x";
       setSquares([...newSquares]);
     };
 
     if (isComputerTurn) {
-      const winingLines = linesThatAre("o", "o", null);
+      reset();
+      const winingLines = linesThatAre(
+        humanInput === "x" ? "o" : "x",
+        humanInput === "x" ? "o" : "x",
+        null
+      );
       if (winingLines.length > 0) {
         const winIndex = winingLines[0].filter(
           (index) => squares[index] === null
         )[0];
+
         putComputerAt(winIndex);
         return;
       }
 
-      const linesToBlock = linesThatAre("x", "x", null);
+      const linesToBlock = linesThatAre(humanInput, humanInput, null);
       if (linesToBlock.length > 0) {
         const blockIndex = linesToBlock[0].filter(
           (index) => squares[index] === null
@@ -105,7 +130,11 @@ function App() {
         return;
       }
 
-      const linesToContinue = linesThatAre("o", null, null);
+      const linesToContinue = linesThatAre(
+        humanInput === "x" ? "o" : "x",
+        null,
+        null
+      );
       if (linesToContinue.length > 0) {
         putComputerAt(
           linesToContinue[0].filter((index) => squares[index] === null)[0]
@@ -120,43 +149,82 @@ function App() {
   }, [squares]);
 
   function handleSquareClick(index) {
-    if((squares.filter((square) => square === null).length===0 && !winner)){
-      alert('`Match Draw!!, Restart again handle')
+    if (!humanInput && humanInput !== "") {
+      return alert("Please choose input first!");
+    }
+    if (squares.filter((square) => square === null).length === 0 && !winner) {
+      alert("`Match Draw!, Restart again");
+      setWinner("null");
       window.location.reload();
     }
-    if (!winner) {
-      start();
-      console.log("in");
-    }
+    console.log("!winner: ", !winner);
+
     let isPlayerTurn;
-    if (!winner && squares.filter((square) => square !== null)) {
-      isPlayerTurn =
-        squares.filter((square) => square !== null).length % 2 === 0;
-    }
+    console.log(
+      "squares.filter((square) => square !== null): ",
+      squares.filter((square) => square !== null).length == 0
+    );
+    // if (!winner && squares.filter((square) => square !== null)) {
+
+    isPlayerTurn = squares.filter((square) => square !== null).length % 2 === 0;
+    // }
 
     if (isPlayerTurn) {
+      console.log("squares[index]: ", squares[index]);
+      if (squares[index] == (humanInput === "x" ? "o" : "x")) {
+        return alert("You can't click on it.");
+      }
+      if (squares[index] == humanInput) {
+        return alert("Already filled.");
+      }
+      if (!winner && squares.filter((square) => square !== null).length == 0) {
+        console.log("ddddd");
+        start();
+        start();
+      }
+      console.log("ss");
+      // start();
       let newSquares = squares;
-      newSquares[index] = "x";
+      newSquares[index] = humanInput;
       setSquares([...newSquares]);
     }
   }
 
   return (
     <main>
-      <div>
-        // Stopwatch Outputs
-        <strong>{time}</strong>
-        {/* <strong>{format}</strong> */}
-        // Stopwatch Inputs
+      <div className="dropdown">
         <button
-          onClick={() => {
-            start();
-            setWinner(null);
-          }}
+          className="btn btn-secondary dropdown-toggle"
+          type="button"
+          id="dropdownMenuButton1"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
         >
-          Start
+          {humanInput
+            ? `Chosen input ${humanInput === "o" ? "O" : "X"}`
+            : "Choose input"}
         </button>
-        {/* <button onClick={() => stop()}>Stop</button> */}
+        <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+          <li
+            className="dropdown-item text-center border"
+            style={{ fontWeight: "bold", cursor: "pointer" }}
+            onClick={() => setHumanInput("x")}
+          >
+            X
+          </li>
+          <li
+            className="dropdown-item text-center border"
+            style={{ fontWeight: "bold", cursor: "pointer" }}
+            onClick={() => setHumanInput("o")}
+          >
+            O
+          </li>
+        </ul>
+      </div>
+
+      <div className="text-white">
+        Time : {"  "}
+        <strong>{Math.floor(time / 1000)}</strong>
       </div>
       <Board>
         {squares.map((square, index) => (
@@ -167,12 +235,21 @@ function App() {
           />
         ))}
       </Board>
-      {!!winner && winner === "x" && (
-        <div className="result green">You WON!</div>
-      )}
-      {!!winner && winner === "o" && (
-        <div className="result red">You LOST!</div>
-      )}
+
+      <div
+      className={`${
+        winner && winner === humanInput ? "result green" : winner &&  winner !== "null" && "result red"
+      }`}
+      >
+        {winner && winner !== "" && winner === humanInput ? (
+          <span className="text-uppercase bold">You won</span>
+        ) : (
+          winner &&
+          winner !== "null" && (
+            <span className="text-uppercase bold">You lost</span>
+          )
+        )}
+      </div>
     </main>
   );
 }
